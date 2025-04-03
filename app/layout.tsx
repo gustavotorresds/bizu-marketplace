@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Bizu Marketplace | Luxury Rentals",
   description:
     "Rent high-end furniture, designer clothes, and premium gym equipment. Try before you buy or simply enjoy luxury for less.",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light">
           <div className="flex min-h-screen flex-col">
             <Navbar />
@@ -34,7 +34,6 @@ export default function RootLayout({
     </html>
   )
 }
-
 
 
 import './globals.css'

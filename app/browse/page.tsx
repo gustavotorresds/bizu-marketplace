@@ -4,83 +4,10 @@ import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Search, SlidersHorizontal } from "lucide-react"
 import ProductCard from "@/components/product-card"
+import { getProducts, type Product } from "@/lib/services/products"
+import { Suspense } from "react"
 
-// Sample product data
-const products = [
-  {
-    id: "1",
-    name: "Premium Dumbbell Set",
-    description: "Complete set with adjustable weights",
-    price: 20,
-    originalPrice: 500,
-    category: "Gym Equipment",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "2",
-    name: "Designer Evening Gown",
-    description: "Perfect for galas and special events",
-    price: 45,
-    originalPrice: 1200,
-    category: "Designer Clothes",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "3",
-    name: "Modern Sectional Sofa",
-    description: "Elegant and comfortable for your living room",
-    price: 65,
-    originalPrice: 1800,
-    category: "Furniture",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "4",
-    name: "Professional Camera Kit",
-    description: "DSLR with multiple lenses and accessories",
-    price: 75,
-    originalPrice: 2500,
-    category: "Photography",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "5",
-    name: "Acoustic Guitar",
-    description: "Premium sound quality for musicians",
-    price: 35,
-    originalPrice: 900,
-    category: "Musical Instruments",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "6",
-    name: "Standing Desk",
-    description: "Adjustable height for ergonomic work",
-    price: 40,
-    originalPrice: 1100,
-    category: "Furniture",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "7",
-    name: "Designer Handbag",
-    description: "Luxury accessory for any occasion",
-    price: 55,
-    originalPrice: 1500,
-    category: "Designer Clothes",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-  {
-    id: "8",
-    name: "Smart Home Gym",
-    description: "Interactive fitness equipment with digital coaching",
-    price: 95,
-    originalPrice: 3000,
-    category: "Gym Equipment",
-    image: "/placeholder.svg?height=300&width=300",
-  },
-]
-
+// Categories are still hardcoded for now
 const categories = [
   "All Categories",
   "Gym Equipment",
@@ -90,6 +17,86 @@ const categories = [
   "Musical Instruments",
   "Electronics",
 ]
+
+// Loading component for products
+function ProductsLoading() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="animate-pulse">
+          <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Products grid component
+async function ProductsGrid() {
+  try {
+    console.log('Fetching products...')
+    const response = await getProducts(1, 12)
+    console.log('Products response:', response)
+    
+    if (!response) {
+      console.error('No response received from getProducts')
+      return (
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">No products found</h2>
+          <p className="text-gray-600 mb-4">There are no products available at the moment.</p>
+        </div>
+      )
+    }
+
+    if (!Array.isArray(response.products)) {
+      console.error('Products is not an array:', response)
+      return (
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Invalid response format</h2>
+          <p className="text-gray-600 mb-4">The server returned an unexpected response format.</p>
+        </div>
+      )
+    }
+
+    if (response.products.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-4">No products found</h2>
+          <p className="text-gray-600 mb-4">There are no products available at the moment.</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {response.products.map((product) => (
+          <ProductCard 
+            key={product._id} 
+            product={{
+              id: product._id,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              originalPrice: product.originalPrice,
+              category: product.category,
+              image: product.images[0] || "/placeholder.svg?height=300&width=300",
+            }} 
+          />
+        ))}
+      </div>
+    )
+  } catch (error) {
+    console.error('Error in ProductsGrid:', error)
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-semibold text-gray-900 mb-4">Something went wrong</h2>
+        <p className="text-gray-600 mb-4">Unable to load products. Please try again later.</p>
+      </div>
+    )
+  }
+}
 
 export default function BrowsePage() {
   return (
@@ -181,11 +188,9 @@ export default function BrowsePage() {
           </div>
 
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <Suspense fallback={<ProductsLoading />}>
+            <ProductsGrid />
+          </Suspense>
 
           {/* Pagination */}
           <div className="flex justify-center mt-12">
